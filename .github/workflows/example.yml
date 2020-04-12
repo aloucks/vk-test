@@ -1,0 +1,19 @@
+on: push
+
+jobs:
+  download:
+    runs-on: windows-latest
+    steps:
+      - name: Create target dir
+        run: mkdir target
+      - name: Download vk-test
+        #if: ${{ runner.os == 'Windows' && matrix.toolchain == 'stable' }}
+        run: curl -LRJ -o target/vk-test_windows-amd64.zip https://github.com/aloucks/vk-test/releases/download/v0.0.0/vk-test_windows-amd64.zip
+
+      - name: Extract vk-test
+        run: |
+          dir target
+          7z
+          7z e target/vk-test_windows-amd64.zip -otarget
+          dir target
+
