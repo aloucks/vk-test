@@ -34,7 +34,7 @@ jobs:
           libxkbcommon-dev libwayland-dev libxrandr-dev \
           libegl1-mesa-dev python3-distutils
 
-    - name: Set cmake options (Windows)
+    - name: Set configure options (Windows)
       if: ${{ runner.os == 'Windows' }}
       run: echo ::set-env name=CONFIGURE_OPTS::-A x64 -Thost=x64
 
@@ -51,6 +51,7 @@ jobs:
     - name: Configure
       run: |
         cmake $CONFIGURE_OPTS -B target \
+         -DCMAKE_BUILD_TYPE=Debug \
          -DCMAKE_INSTALL_PREFIX="$(pwd)/target/install" \
          -DSWIFTSHADER_BUILD_EGL=OFF \
          -DSWIFTSHADER_BUILD_GLESv2=OFF \
@@ -61,7 +62,7 @@ jobs:
       shell: bash
 
     - name: Build
-      run: cmake --build target --target install
+      run: cmake --build target $BUILD_OPTS --target install
       shell: bash
 
     - name: Create artifact (Windows)
