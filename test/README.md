@@ -1,0 +1,1 @@
+Test for the [example workflow](../.github/workflows/example.yml).

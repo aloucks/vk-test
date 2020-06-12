@@ -1,0 +1,164 @@
+name: Release
+on:
+  push:
+    tags:
+    - 'v*'
+
+jobs:
+  release:
+    name: Create release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+    - name: Create release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: true
+        prerelease: false
+
+  build:
+    name: Build
+    needs: release
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    - name: Create target
+      run: mkdir -p target
+      shell: bash
+
+    - name: Install dependencies (Linux)
+      if: ${{ runner.os == 'Linux' }}
+      run: |
+        sudo apt install build-essential libx11-xcb-dev \
+          libxkbcommon-dev libwayland-dev libxrandr-dev \
+          libegl1-mesa-dev python3-distutils
+
+    - name: Set cmake options (Windows)
+      if: ${{ runner.os == 'Windows' }}
+      run: echo ::set-env name=CONFIGURE_OPTS::-A x64 -Thost=x64
+
+    - name: Set Linux build options
+      if: ${{ runner.os != 'Linux' }}
+      run: |
+        echo ::set-env name=BUILD_OPTS=-j $(cat /proc/cpuinfo | grep processor | wc -l)
+
+    - name: Set MacOS build options
+      if: ${{ runner.os != 'macOS' }}
+      run: |
+        echo ::set-env name=BUILD_OPTS=-j $(sysctl -n hw.ncpu)
+
+    - name: Configure
+      run: |
+        cmake $CONFIGURE_OPTS -B target \
+         -DCMAKE_INSTALL_PREFIX="$(pwd)/target/install" \
+         -DSWIFTSHADER_BUILD_EGL=OFF \
+         -DSWIFTSHADER_BUILD_GLESv2=OFF \
+         -DSWIFTSHADER_BUILD_GLES_CM=OFF \
+         -DSWIFTSHADER_BUILD_PVR=OFF \
+         -DSWIFTSHADER_GET_PVR=OFF \
+         -DSWIFTSHADER_BUILD_TESTS=OFF
+      shell: bash
+
+    - name: Build
+      run: cmake --build target --target install
+      shell: bash
+
+    - name: Create artifact (Windows)
+      if: ${{ runner.os == 'Windows' }}
+      run: |
+        mkdir -p target/vulkan/driver
+        mkdir -p target/vulkan/layers
+        cp target/Windows/vk_swiftshader.dll target/vulkan/driver
+        cp target/Windows/vk_swiftshader_icd.json target/vulkan/driver
+        cp target/install/lib/VkLayer_khronos_validation.dll target/vulkan/layers
+        cp target/install/lib/VkLayer_khronos_validation.json target/vulkan/layers
+        cp target/install/bin/vulkan-1.dll target/vulkan
+        cd target
+        7z a -tzip vk-ci-windows-amd64.zip vulkan
+      shell: bash
+
+    - name: Create artifact (Linux)
+      if: ${{ runner.os == 'Linux' }}
+      run: |
+        mkdir -p target/vulkan/driver
+        mkdir -p target/vulkan/layers
+        cp -pa target/install/lib/libVkLayer_khronos_validation.so target/vulkan/layers/
+        cp -pa target/install/share/vulkan/explicit_layer.d/VkLayer_khronos_validation.json target/vulkan/layers/
+        cp -pa target/Linux/vk_swiftshader_icd.json target/vulkan/driver/
+        cp -pa target/Linux/libvk_swiftshader.so target/vulkan/driver/
+        cp -pa target/install/lib/libvulkan.so target/vulkan/
+        cp -pa target/install/lib/libvulkan.so.1 target/vulkan/
+        cp -pa target/install/lib/libvulkan.so... target/vulkan/
+        cd target
+        tar zvcf vk-ci-linux-amd64.tar.gz vulkan
+      shell: bash
+
+    - name: Create artifact (MacOS)
+      if: ${{ runner.os == 'macOS' }}
+      run: |
+        mkdir -p target/vulkan/driver
+        mkdir -p target/vulkan/layers
+        LAYER_DYLIB_PATH=$(find target -name libVkLayer_khronos_validation.dylib | head -n 1)
+        echo $LAYER_DYLIB_PATH
+        cp -pa $LAYER_DYLIB_PATH target/vulkan/layers/
+        cp -pa target/install/share/vulkan/explicit_layer.d/VkLayer_khronos_validation.json target/vulkan/layers/
+        cp -pa target/Darwin/vk_swiftshader_icd.json target/vulkan/driver/
+        cp -pa target/Darwin/libvk_swiftshader.dylib target/vulkan/driver/
+        cp -pa target/install/lib/libvulkan.dylib target/vulkan/
+        cp -pa target/install/lib/libvulkan.1.dylib target/vulkan/
+        cp -pa target/install/lib/libvulkan....dylib target/vulkan/
+        cd target
+        tar zvcf vk-ci-macos-amd64.tar.gz vulkan
+      shell: bash
+
+    - name: Upload release artifact (Windows)
+      if: ${{ runner.os == 'Windows' }}
+      id: upload-release-asset-windows
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.release.outputs.upload_url }}
+        asset_path: ./target/vk-ci-windows-amd64.zip
+        asset_name: vk-ci-windows-amd64.zip
+        asset_content_type: application/zip
+
+    - name: Upload release artifact (Linux)
+      if: ${{ runner.os == 'Linux' }}
+      id: upload-release-asset-linux
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.release.outputs.upload_url }}
+        asset_path: ./target/vk-ci-linux-amd64.tar.gz
+        asset_name: vk-ci-linux-amd64.tar.gz
+        asset_content_type: application/gzip
+
+    - name: Upload release artifact (MacOS)
+      if: ${{ runner.os == 'macOS' }}
+      id: upload-release-asset-macos
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.release.outputs.upload_url }}
+        asset_path: ./target/vk-ci-macos-amd64.tar.gz
+        asset_name: vk-ci-macos-amd64.tar.gz
+        asset_content_type: application/gzip
+
+
