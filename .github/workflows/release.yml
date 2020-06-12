@@ -51,13 +51,13 @@ jobs:
       if: ${{ runner.os == 'Windows' }}
       run: echo ::set-env name=CONFIGURE_OPTS::-A x64 -Thost=x64
 
-    - name: Set Linux build options
-      if: ${{ runner.os != 'Linux' }}
+    - name: Set build options (Linux)
+      if: ${{ runner.os == 'Linux' }}
       run: |
         echo ::set-env name=BUILD_OPTS=-j $(cat /proc/cpuinfo | grep processor | wc -l)
 
-    - name: Set MacOS build options
-      if: ${{ runner.os != 'macOS' }}
+    - name: Set build options (MacOS)
+      if: ${{ runner.os == 'macOS' }}
       run: |
         echo ::set-env name=BUILD_OPTS=-j $(sysctl -n hw.ncpu)
 
