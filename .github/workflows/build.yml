@@ -153,17 +153,22 @@ jobs:
         VK_LOADER_DEBUG: all # optional
         VK_LAYER_PATH: ${{ github.workspace }}/target/vulkan/layers
         VK_ICD_FILENAMES: ${{ github.workspace }}/target/vulkan/driver/vk_swiftshader_icd.json
-        LD_LIBRARY_PATH: ${{ github.workspace }}/target/vulkan
+        LD_LIBRARY_PATH: ${{ github.workspace }}/target/vulkan:${{ github.workspace }}/target/vulkan/layers
         SWIFTSHADER_DISABLE_DEBUGGER_WAIT_DIALOG: 1
 
     - name: Test (MacOS)
       if: ${{ runner.os == 'macOS' }}
-      run: cargo test --manifest-path=test/Cargo.toml -- --nocapture
+      run: |
+        sudo cp -pa target/vulkan/libvulkan....dylib /usr/local/lib/
+        sudo cp -pa target/vulkan/libvulkan.1.dylib /usr/local/lib/
+        sudo cp -pa target/vulkan/libvulkan.dylib /usr/local/lib/
+        sudo cp -pa target/vulkan/driver/libvk_swiftshader.dylib /usr/local/lib/
+        sudo cp -pa target/vulkan/layers/libVkLayer_khronos_validation.dylib /usr/local/lib/
+        cargo test --manifest-path=test/Cargo.toml -- --nocapture
       env:
         VK_LOADER_DEBUG: all # optional
         VK_LAYER_PATH: ${{ github.workspace }}/target/vulkan/layers
         VK_ICD_FILENAMES: ${{ github.workspace }}/target/vulkan/driver/vk_swiftshader_icd.json
-        DYLD_LIBRARY_PATH: ${{ github.workspace }}/target/vulkan
         SWIFTSHADER_DISABLE_DEBUGGER_WAIT_DIALOG: 1
 
 
