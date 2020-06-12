@@ -160,7 +160,7 @@ jobs:
         VK_LOADER_DEBUG: all # optional
         VK_LAYER_PATH: ${{ github.workspace }}/target/vulkan/layers
         VK_ICD_FILENAMES: ${{ github.workspace }}/target/vulkan/driver/vk_swiftshader_icd.json
-        LD_LIBRARY_PATH: ${{ github.workspace }}/target/vulkan
+        DYLD_LIBRARY_PATH: ${{ github.workspace }}/target/vulkan
         SWIFTSHADER_DISABLE_DEBUGGER_WAIT_DIALOG: 1
 
 
