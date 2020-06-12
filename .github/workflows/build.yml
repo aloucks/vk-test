@@ -3,6 +3,7 @@ on:
   push:
     paths-ignore:
     - .github/workflows/release.yml
+    - .github/workflows/example.yml
     - README.md
     branches: [ master ]
   pull_request:
@@ -112,7 +113,7 @@ jobs:
       shell: bash
 
     - name: Upload artifact (Windows)
-      if: ${{ runner.os == 'macOS' }}
+      if: ${{ runner.os == 'Windows' }}
       uses: actions/upload-artifact@v2
       with:
         name: vk-ci-windows-amd64
@@ -132,11 +133,13 @@ jobs:
         name: vk-ci-macos-amd64
         path: target/vk-ci-macos-amd64.tar.gz
 
+    - name: Update path (Windows)
+      if: ${{ runner.os == 'Windows' }}
+      run: echo "::add-path::${{ github.workspace }}\target\vulkan"
+
     - name: Test (Windows)
       if: ${{ runner.os == 'Windows' }}
-      run: |
-        echo "::add-path::${{ github.workspace }}\target\vulkan"
-        cargo test --manifest-path=test/Cargo.toml -- --nocapture
+      run: cargo test --manifest-path=test/Cargo.toml -- --nocapture
       env:
         VK_LOADER_DEBUG: all # optional
         VK_LAYER_PATH: ${{ github.workspace }}\target\vulkan\layers
