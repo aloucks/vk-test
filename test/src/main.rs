@@ -57,6 +57,7 @@ struct Version {
 #[test]
 fn test_get_physical_devices() -> Result<(), Box<dyn std::error::Error>> {
     let devices = get_physical_devices()?;
+    assert_eq!(false, devices.is_empty());
     println!("{:#?}", devices);
     Ok(())
 }
