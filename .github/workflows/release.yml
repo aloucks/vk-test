@@ -64,7 +64,7 @@ jobs:
     - name: Configure
       run: |
         cmake $CONFIGURE_OPTS -B target \
-         -DCMAKE_BUILD_TYPE=Debug \
+         -DCMAKE_BUILD_TYPE=Release \
          -DCMAKE_INSTALL_PREFIX="$(pwd)/target/install" \
          -DSWIFTSHADER_BUILD_EGL=OFF \
          -DSWIFTSHADER_BUILD_GLESv2=OFF \
