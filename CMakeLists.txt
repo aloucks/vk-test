@@ -12,9 +12,9 @@ add_subdirectory("glslang")
 add_subdirectory("swiftshader")
 add_subdirectory("Vulkan-ValidationLayers")
 
-# Enables the vulkan loader to always have access to environment variables
-# when checking for ICD and layer file paths. This is needed when executing
-# in a github runner, where the process may have elevated permissions.
+# Enables the vulkan loader to have access to environment variables
+# when checking for ICD and layer file paths. This may be needed if
+# the process is executing in a container with elevated permissions.
 target_compile_options(vulkan PUBLIC -DUSE_UNSAFE_FILE_SEARCH)
 if (WIN32)
     target_compile_options(loader-norm PUBLIC -DUSE_UNSAFE_FILE_SEARCH)
