@@ -3,7 +3,10 @@ cmake_minimum_required(VERSION 3.14)
 project(LANGUAGES C CXX ASM)
 
 if (NOT EXISTS glslang/External/spirv-tools)
-    execute_process(COMMAND python update_glslang_sources.py WORKING_DIRECTORY glslang)
+    execute_process(COMMAND python update_glslang_sources.py WORKING_DIRECTORY glslang RESULT_VARIABLE update_glslang_ret)
+    if (NOT ${update_glslang_ret} EQUAL 0)
+        message(FATAL_ERROR "Could not update glslang sources. Is python installed?")
+    endif()
 endif()
 
 add_subdirectory("Vulkan-Headers")
