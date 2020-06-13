@@ -1,1 +1,1 @@
-Test for the [example workflow](../.github/workflows/example.yml).
+Test for the [build workflow](../.github/workflows/build.yml).

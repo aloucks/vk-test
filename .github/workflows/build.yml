@@ -3,8 +3,7 @@ on:
   push:
     paths-ignore:
     - .github/workflows/release.yml
-    - .github/workflows/example.yml
-    - README.md
+    - "**/README.md"
     branches: [ master ]
   pull_request:
     branches: [ master ]
